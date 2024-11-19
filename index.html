@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>starfield-js</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        canvas {
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<script type="module">
+    import {Starfield} from "./src/Starfield.js"
+    new Starfield(document.getElementById("starfield"))
+</script>
+</body>
+</html>
