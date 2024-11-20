@@ -7,7 +7,9 @@ export class Starfield {
     constructor(canvas, props) {
         this.canvas = canvas
         this.props = {
-            starCount: 500,
+            starCount: 400,
+            speed: 10,
+            fpsMax: 50,
             ...props
         }
         this.ctx = canvas.getContext("2d")
@@ -29,7 +31,7 @@ export class Starfield {
             this.ctx.beginPath()
             this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
             this.ctx.fill()
-            star.z -= 1
+            star.z -= this.props.speed * 60 / this.props.fpsMax
             if (star.z <= 0) {
                 star.z = this.canvas.width
                 star.x = Math.random() * this.canvas.width - this.centerX
@@ -38,7 +40,7 @@ export class Starfield {
         }
         setTimeout(() => {
             requestAnimationFrame(this.draw.bind(this))
-        }, 50)
+        }, 1000 / this.props.fpsMax)
     }
     init() {
         this.stars = []

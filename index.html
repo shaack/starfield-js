@@ -7,16 +7,35 @@
     <style>
         body {
             margin: 0;
-        }
-        canvas {
+            overflow: hidden;
             background-color: black;
+        }
+        canvas#starfield {
+            position: fixed;
+            background-color: black;
+
+        }
+        main {
+            position: absolute;
             width: 100vw;
             height: 100vh;
+        }
+        main .text {
+            font-family: serif;
+            font-size: 5vw;
+            color: rgba(50, 50, 128, 1);
+            width: 100%;
+            position: absolute;
+            text-align: center;
+            top: 45%;
         }
     </style>
 </head>
 <body>
 <canvas id="starfield"></canvas>
+<main>
+    <div class="text">starfield-js</div>
+</main>
 <script type="module">
     import {Starfield} from "./src/Starfield.js"
     new Starfield(document.getElementById("starfield"))
