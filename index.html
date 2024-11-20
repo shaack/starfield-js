@@ -20,21 +20,23 @@
             width: 100vw;
             height: 100vh;
         }
-        main .text {
+        main .text a {
             font-family: serif;
-            font-size: 5vw;
+            font-size: min(12vw, 100px);
             color: rgba(50, 50, 128, 1);
             width: 100%;
             position: absolute;
             text-align: center;
             top: 45%;
+            cursor: pointer;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
 <canvas id="starfield"></canvas>
 <main>
-    <div class="text">starfield-js</div>
+    <div class="text"><a href="https://github.com/shaack/starfield-js">starfield-js</a></div>
 </main>
 <script type="module">
     import {Starfield} from "./src/Starfield.js"
