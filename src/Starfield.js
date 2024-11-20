@@ -16,7 +16,10 @@ export class Starfield {
         this.init()
         this.draw()
         window.addEventListener("resize", () => {
-            this.init()
+            clearTimeout(this.initDebounce)
+            this.initDebounce = setTimeout(() => {
+                this.init()
+            }, 100)
         })
 
     }
