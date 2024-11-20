@@ -1,6 +1,6 @@
 {
   "name": "starfield-js",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A JavaScript starfield animation without dependencies",
   "main": "index.html",
   "scripts": {
