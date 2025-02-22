@@ -8,8 +8,10 @@ export class Starfield {
         this.canvas = canvas
         this.props = {
             starCount: 400,
-            speed: 10,
+            speed: 8,
             fpsMax: 50,
+            colored: true,
+            magnification: 3,
             ...props
         }
         this.ctx = canvas.getContext("2d")
@@ -30,10 +32,13 @@ export class Starfield {
             const star = this.stars[i]
             const x = this.centerX + (star.x / star.z) * this.canvas.width
             const y = this.centerY + (star.y / star.z) * this.canvas.height
-            const size = 2 * (1 - star.z / this.canvas.width)
+            const size = this.props.magnification * (1 - star.z / this.canvas.width)
             this.ctx.beginPath()
             this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
             this.ctx.fill()
+            if(this.props.colored) {
+                this.ctx.fillStyle = star.color
+            }
             star.z -= this.props.speed * 60 / this.props.fpsMax
             if (star.z <= 0) {
                 star.z = this.canvas.width
@@ -55,7 +60,8 @@ export class Starfield {
             this.stars.push({
                 x: Math.random() * this.canvas.width - this.centerX,
                 y: Math.random() * this.canvas.height - this.centerY,
-                z: Math.random() * this.canvas.width
+                z: Math.random() * this.canvas.width,
+                color: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`
             })
         }
     }
