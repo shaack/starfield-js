@@ -8,9 +8,9 @@ export class Starfield {
         this.canvas = canvas
         this.props = {
             starCount: 400,
-            speed: 8,
+            speed: 5,
             fpsMax: 50,
-            colored: true,
+            color: "multi", // set "multi" or a fixed color, like "#ff9"
             magnification: 3,
             ...props
         }
@@ -36,9 +36,7 @@ export class Starfield {
             this.ctx.beginPath()
             this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
             this.ctx.fill()
-            if(this.props.colored) {
-                this.ctx.fillStyle = star.color
-            }
+            this.ctx.fillStyle = star.color
             star.z -= this.props.speed * 60 / this.props.fpsMax
             if (star.z <= 0) {
                 star.z = this.canvas.width
@@ -57,12 +55,19 @@ export class Starfield {
         this.centerX = this.canvas.width / 2
         this.centerY = this.canvas.height / 2
         for (let i = 0; i < this.props.starCount; i++) {
-            this.stars.push({
+            const star = {
                 x: Math.random() * this.canvas.width - this.centerX,
                 y: Math.random() * this.canvas.height - this.centerY,
                 z: Math.random() * this.canvas.width,
-                color: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`
-            })
+                color: "rgb(255,255,255)"
+            }
+            if(this.props.color === "multi") {
+                star.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`
+            } else {
+                star.color = this.props.color
+            }
+
+            this.stars.push(star)
         }
     }
 }
