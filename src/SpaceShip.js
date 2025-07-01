@@ -16,6 +16,7 @@ export class SpaceShip {
             curveChangeRate: 0.005, // How often the curve direction changes
             tailLength: 50, // Number of positions to keep for the tail
             tailMaxDistance: 500, // Maximum distance in pixels for the tail
+            tailOpacity: 1.0, // Base opacity of the tail (0.0 to 1.0)
             edgeDistance: 100, // Distance from edge to start turning
             edgeCurveIntensity: 0.05, // How strongly to curve when approaching an edge
             ...props
@@ -213,8 +214,9 @@ export class SpaceShip {
 
             currentDistance += distances[i-1];
 
-            // Calculate opacity based on distance (1.0 at start, 0.0 at maxDistance)
-            const opacity = Math.max(0, 1 - (currentDistance / this.props.tailMaxDistance));
+            // Calculate opacity based on distance and tailOpacity
+            // (tailOpacity at start, 0.0 at maxDistance)
+            const opacity = Math.max(0, this.props.tailOpacity * (1 - (currentDistance / this.props.tailMaxDistance)));
 
             if (opacity <= 0) break; // Stop drawing if opacity reaches 0
 
