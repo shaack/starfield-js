@@ -10,7 +10,8 @@ export class SpaceShip {
             speed: 3,
             size: 10,
             color: "#ffffff",
-            tailColor: null, // If null, will use the ship color
+            tailStartColor: null, // If null, will use the ship color
+            tailEndColor: null, // If null, will use the tailStartColor
             curveIntensity: 0.02, // How much the ship curves during flight
             curveChangeRate: 0.005, // How often the curve direction changes
             tailLength: 50, // Number of positions to keep for the tail
@@ -20,9 +21,14 @@ export class SpaceShip {
             ...props
         }
 
-        // If tailColor is not specified, use the ship color
-        if (!this.props.tailColor) {
-            this.props.tailColor = this.props.color
+        // If tailStartColor is not specified, use the ship color
+        if (!this.props.tailStartColor) {
+            this.props.tailStartColor = this.props.color
+        }
+
+        // If tailEndColor is not specified, use the tailStartColor
+        if (!this.props.tailEndColor) {
+            this.props.tailEndColor = this.props.tailStartColor
         }
         this.ctx = canvas.getContext("2d")
         this.positions = [] // Array to store previous positions for the tail
@@ -217,9 +223,11 @@ export class SpaceShip {
             this.ctx.moveTo(prev.x, prev.y);
             this.ctx.lineTo(current.x, current.y);
 
-            // Use the tail color with decreasing opacity
-            const color = this.props.tailColor;
-            this.ctx.strokeStyle = this.getRGBAFromHex(color, opacity);
+            // Interpolate between start and end tail colors based on distance
+            // Factor is 0 at the start of the tail (closest to ship) and 1 at 25% of the tail length
+            const colorFactor = Math.min(1.0, currentDistance / (this.props.tailMaxDistance * 0.25));
+            const interpolatedColor = this.interpolateColors(this.props.tailStartColor, this.props.tailEndColor, colorFactor);
+            this.ctx.strokeStyle = this.getRGBAFromHex(interpolatedColor, opacity);
             this.ctx.lineWidth = this.props.size / 3; // Thinner than the ship
             this.ctx.stroke();
 
@@ -242,5 +250,33 @@ export class SpaceShip {
 
         // Return rgba value
         return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Helper function to interpolate between two hex colors
+    interpolateColors(color1, color2, factor) {
+        // Remove # if present
+        color1 = color1.replace('#', '');
+        color2 = color2.replace('#', '');
+
+        // Parse the hex values
+        const r1 = parseInt(color1.substring(0, 2), 16);
+        const g1 = parseInt(color1.substring(2, 4), 16);
+        const b1 = parseInt(color1.substring(4, 6), 16);
+
+        const r2 = parseInt(color2.substring(0, 2), 16);
+        const g2 = parseInt(color2.substring(2, 4), 16);
+        const b2 = parseInt(color2.substring(4, 6), 16);
+
+        // Interpolate the RGB values
+        const r = Math.round(r1 + factor * (r2 - r1));
+        const g = Math.round(g1 + factor * (g2 - g1));
+        const b = Math.round(b1 + factor * (b2 - b1));
+
+        // Convert back to hex
+        const rHex = r.toString(16).padStart(2, '0');
+        const gHex = g.toString(16).padStart(2, '0');
+        const bHex = b.toString(16).padStart(2, '0');
+
+        return `#${rHex}${gHex}${bHex}`;
     }
 }
