@@ -10,6 +10,7 @@ export class SpaceShip {
             speed: 3,
             size: 10,
             color: "#ffffff",
+            tailColor: null, // If null, will use the ship color
             curveIntensity: 0.02, // How much the ship curves during flight
             curveChangeRate: 0.005, // How often the curve direction changes
             tailLength: 50, // Number of positions to keep for the tail
@@ -17,6 +18,11 @@ export class SpaceShip {
             edgeDistance: 100, // Distance from edge to start turning
             edgeCurveIntensity: 0.05, // How strongly to curve when approaching an edge
             ...props
+        }
+
+        // If tailColor is not specified, use the ship color
+        if (!this.props.tailColor) {
+            this.props.tailColor = this.props.color
         }
         this.ctx = canvas.getContext("2d")
         this.positions = [] // Array to store previous positions for the tail
@@ -211,8 +217,8 @@ export class SpaceShip {
             this.ctx.moveTo(prev.x, prev.y);
             this.ctx.lineTo(current.x, current.y);
 
-            // Use the ship's color with decreasing opacity
-            const color = this.props.color;
+            // Use the tail color with decreasing opacity
+            const color = this.props.tailColor;
             this.ctx.strokeStyle = this.getRGBAFromHex(color, opacity);
             this.ctx.lineWidth = this.props.size / 3; // Thinner than the ship
             this.ctx.stroke();
