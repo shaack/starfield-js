@@ -28,6 +28,12 @@ export class SpaceShip {
             swarmCount: 1, // Total number of ships in the swarm
             swarmSpread: 0.3, // How far apart the ships are horizontally (0-1)
             swarmOffset: 0.1, // Vertical offset between ships (0-1)
+
+            // Following behavior properties
+            followEnabled: true, // Whether ships should follow each other
+            followStrength: 0.02, // How strongly a ship follows another (0-1)
+            followDistance: 200, // Maximum distance to follow another ship
+            followIndex: null, // Index of the ship to follow (null = automatic)
             ...props
         }
 
@@ -54,37 +60,44 @@ export class SpaceShip {
         this.isStuck = false
         this.stuckFrames = 0
 
+        // Initialize swarm-related properties
+        this.swarm = null
+        this.targetShip = null
+
         this.init()
     }
 
     init() {
-        // Calculate position based on index in the swarm
+        // Calculate the dimensions of the canvas
         const canvasWidth = this.canvas.width
         const canvasHeight = this.canvas.height
 
-        // Calculate horizontal spread based on index
-        // Center ship (index 1 in a 3-ship swarm) will be in the middle
-        // Other ships will be spread out based on swarmSpread
-        const normalizedIndex = this.props.index - (this.props.swarmCount - 1) / 2
-        const horizontalPosition = 0.5 + normalizedIndex * this.props.swarmSpread
+        // Calculate the center 50% area of the screen
+        // This means 25% from each edge
+        const centerXStart = canvasWidth * 0.25
+        const centerXEnd = canvasWidth * 0.75
+        const centerYStart = canvasHeight * 0.25
+        const centerYEnd = canvasHeight * 0.75
 
-        // Apply some randomness to make it look more natural
-        const randomOffset = (Math.random() - 0.5) * 0.1
+        // Calculate the width and height of the center area
+        const centerWidth = centerXEnd - centerXStart
+        const centerHeight = centerYEnd - centerYStart
 
-        // Calculate x position (constrained to be within the canvas)
-        this.x = Math.max(this.props.edgeDistance,
-                 Math.min(canvasWidth - this.props.edgeDistance,
-                         canvasWidth * (horizontalPosition + randomOffset)))
+        // Position ships randomly within the center 50% area
+        // Apply some spread based on index to avoid ships starting at the exact same position
+        const indexOffset = (this.props.index / Math.max(1, this.props.swarmCount - 1)) - 0.5
+        const spreadFactor = 0.3 // How much to spread ships based on index (0 = no spread, 1 = full spread)
 
-        // Calculate y position with vertical offset based on index
-        // All ships start from the bottom, but with slight vertical offsets
-        const verticalOffset = this.props.index * this.props.swarmOffset * canvasHeight
-        this.y = canvasHeight - this.props.edgeDistance - verticalOffset
+        // Random position within center area with some spread based on index
+        this.x = centerXStart + centerWidth * (0.5 + indexOffset * spreadFactor + (Math.random() - 0.5) * (1 - spreadFactor))
+        this.y = centerYStart + centerHeight * (0.5 + indexOffset * spreadFactor + (Math.random() - 0.5) * (1 - spreadFactor))
 
-        // Set initial direction to upward (3π/2 or 270 degrees in radians)
-        // Add a small random variation to each ship's direction
-        const directionVariation = (Math.random() - 0.5) * 0.2
-        this.direction = 3 * Math.PI / 2 + directionVariation
+        // Ensure the ship stays within the center area
+        this.x = Math.max(centerXStart, Math.min(centerXEnd, this.x))
+        this.y = Math.max(centerYStart, Math.min(centerYEnd, this.y))
+
+        // Set a random initial direction (angle in radians between 0 and 2π)
+        this.direction = Math.random() * Math.PI * 2
 
         // Current curve value (positive or negative affects curve direction)
         // Vary the initial curve value based on index to create different flight patterns
@@ -295,11 +308,20 @@ export class SpaceShip {
 
         // Only apply random curve if not near an edge
         if (!edgeCurveApplied) {
-            if (Math.random() < this.props.curveChangeRate) {
-                this.curveValue = (Math.random() - 0.5) * this.props.curveIntensity;
+            // Apply following behavior if enabled and we have a target ship
+            let followingApplied = false;
+            if (this.props.followEnabled && this.targetShip) {
+                followingApplied = this.applyFollowingBehavior();
             }
-            // Apply the random curve to the direction
-            this.direction += this.curveValue;
+
+            // Apply random curve if not following another ship
+            if (!followingApplied) {
+                if (Math.random() < this.props.curveChangeRate) {
+                    this.curveValue = (Math.random() - 0.5) * this.props.curveIntensity;
+                }
+                // Apply the random curve to the direction
+                this.direction += this.curveValue;
+            }
 
             // Reset all edge proximity counters when we're away from edges
             this.edgeProximityFrames.left = 0;
@@ -439,5 +461,64 @@ export class SpaceShip {
         const bHex = b.toString(16).padStart(2, '0');
 
         return `#${rHex}${gHex}${bHex}`;
+    }
+
+    // Set the swarm of ships and determine which one to follow
+    setSwarm(swarm) {
+        this.swarm = swarm;
+
+        if (!this.props.followEnabled || this.swarm.length <= 1) {
+            return; // No following if disabled or only one ship
+        }
+
+        // Determine which ship to follow
+        if (this.props.followIndex !== null) {
+            // Use specified index if provided
+            const followIndex = this.props.followIndex % this.swarm.length;
+            if (followIndex !== this.props.index) { // Don't follow yourself
+                this.targetShip = this.swarm[followIndex];
+            }
+        } else {
+            // By default, follow the next ship in the sequence (circular)
+            const nextIndex = (this.props.index + 1) % this.swarm.length;
+            this.targetShip = this.swarm[nextIndex];
+        }
+    }
+
+    // Calculate and apply direction adjustment to follow the target ship
+    applyFollowingBehavior() {
+        if (!this.targetShip) {
+            return false;
+        }
+
+        // Calculate distance to target ship
+        const dx = this.targetShip.x - this.x;
+        const dy = this.targetShip.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Only follow if within the follow distance
+        if (distance > this.props.followDistance) {
+            return false;
+        }
+
+        // Calculate direction to target ship
+        const targetDirection = Math.atan2(dy, dx);
+
+        // Calculate the difference between current and target direction
+        let dirDiff = targetDirection - this.direction;
+
+        // Normalize the difference to be between -π and π
+        while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
+        while (dirDiff < -Math.PI) dirDiff += 2 * Math.PI;
+
+        // Apply direction adjustment based on follow strength
+        // Stronger effect when closer to the target ship
+        const distanceFactor = 1 - (distance / this.props.followDistance);
+        const adjustmentStrength = this.props.followStrength * distanceFactor;
+
+        // Apply the adjustment to the direction
+        this.direction += dirDiff * adjustmentStrength;
+
+        return true;
     }
 }

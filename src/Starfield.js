@@ -94,6 +94,11 @@ export class Starfield {
                 }
                 this.spaceShips.push(new SpaceShip(this.canvas, shipProps))
             }
+
+            // After all ships are created, pass the swarm to each ship
+            for (const ship of this.spaceShips) {
+                ship.setSwarm(this.spaceShips)
+            }
         }
     }
 }
