@@ -52,7 +52,7 @@
     import {Starfield} from "./src/Starfield.js"
     new Starfield(document.getElementById("starfield"), {
         showSpaceShip: true,
-        spaceShipCount: 3, // Configure the number of ships in the swarm
+        spaceShipCount: 6, // Configure the number of ships in the swarm
         spaceShipProps: {
             color: "#2d509e", // Blue ship
             tailStartColor: "#ffff00", // Yellow start of tail
@@ -75,7 +75,12 @@
             // Following behavior configuration
             followEnabled: true, // Whether ships should follow each other
             followStrength: 0.07, // How strongly a ship follows another (0-1)
-            followDistance: 300 // Maximum distance to follow another ship
+            followDistance: 300, // Maximum distance to follow another ship
+
+            // Initial swarm formation configuration
+            initialSwarmRadius: 80, // Radius of the initial swarm formation in pixels
+            initialSwarmCenter: null, // null = center of screen
+            initialDirectionVariation: 0.2 // How much the initial directions can vary (0-1)
         }
     })
 </script>

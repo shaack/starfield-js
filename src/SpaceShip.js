@@ -29,6 +29,11 @@ export class SpaceShip {
             swarmSpread: 0.3, // How far apart the ships are horizontally (0-1)
             swarmOffset: 0.1, // Vertical offset between ships (0-1)
 
+            // Initial swarm formation properties
+            initialSwarmRadius: 50, // Radius of the initial swarm formation
+            initialSwarmCenter: null, // Center point of the swarm (null = center of screen)
+            initialDirectionVariation: 0.3, // How much the initial directions can vary (0-1)
+
             // Following behavior properties
             followEnabled: true, // Whether ships should follow each other
             followStrength: 0.02, // How strongly a ship follows another (0-1)
@@ -72,32 +77,55 @@ export class SpaceShip {
         const canvasWidth = this.canvas.width
         const canvasHeight = this.canvas.height
 
-        // Calculate the center 50% area of the screen
-        // This means 25% from each edge
-        const centerXStart = canvasWidth * 0.25
-        const centerXEnd = canvasWidth * 0.75
-        const centerYStart = canvasHeight * 0.25
-        const centerYEnd = canvasHeight * 0.75
+        // Determine the center of the swarm
+        let swarmCenterX, swarmCenterY;
+        if (this.props.initialSwarmCenter) {
+            // Use provided center point
+            swarmCenterX = this.props.initialSwarmCenter.x;
+            swarmCenterY = this.props.initialSwarmCenter.y;
+        } else {
+            // Default to center of the screen
+            swarmCenterX = canvasWidth / 2;
+            swarmCenterY = canvasHeight / 2;
+        }
 
-        // Calculate the width and height of the center area
-        const centerWidth = centerXEnd - centerXStart
-        const centerHeight = centerYEnd - centerYStart
+        // Calculate position in a circular formation
+        // Ships are positioned in a circle around the swarm center
+        // with some randomness to make it look more natural
 
-        // Position ships randomly within the center 50% area
-        // Apply some spread based on index to avoid ships starting at the exact same position
-        const indexOffset = (this.props.index / Math.max(1, this.props.swarmCount - 1)) - 0.5
-        const spreadFactor = 0.3 // How much to spread ships based on index (0 = no spread, 1 = full spread)
+        // Calculate angle based on index (distribute ships evenly around the circle)
+        const angleStep = (2 * Math.PI) / this.props.swarmCount;
+        const baseAngle = this.props.index * angleStep;
 
-        // Random position within center area with some spread based on index
-        this.x = centerXStart + centerWidth * (0.5 + indexOffset * spreadFactor + (Math.random() - 0.5) * (1 - spreadFactor))
-        this.y = centerYStart + centerHeight * (0.5 + indexOffset * spreadFactor + (Math.random() - 0.5) * (1 - spreadFactor))
+        // Add some randomness to the angle
+        const angleVariation = (Math.random() - 0.5) * angleStep * 0.5;
+        const angle = baseAngle + angleVariation;
 
-        // Ensure the ship stays within the center area
-        this.x = Math.max(centerXStart, Math.min(centerXEnd, this.x))
-        this.y = Math.max(centerYStart, Math.min(centerYEnd, this.y))
+        // Calculate distance from center (slightly randomized)
+        // Ships with lower indices are closer to the center
+        const indexFactor = this.props.index / Math.max(1, this.props.swarmCount - 1);
+        const distanceFactor = 0.3 + indexFactor * 0.7; // 0.3 to 1.0 based on index
+        const distance = this.props.initialSwarmRadius * distanceFactor * (0.8 + Math.random() * 0.4);
 
-        // Set a random initial direction (angle in radians between 0 and 2π)
-        this.direction = Math.random() * Math.PI * 2
+        // Calculate position
+        this.x = swarmCenterX + Math.cos(angle) * distance;
+        this.y = swarmCenterY + Math.sin(angle) * distance;
+
+        // Ensure the ship stays within the screen boundaries
+        const padding = this.props.edgeDistance;
+        this.x = Math.max(padding, Math.min(canvasWidth - padding, this.x));
+        this.y = Math.max(padding, Math.min(canvasHeight - padding, this.y));
+
+        // Set initial direction
+        // Base direction is outward from the center of the swarm
+        const baseDirection = angle;
+
+        // Add some variation to the direction
+        const directionVariation = (Math.random() - 0.5) * this.props.initialDirectionVariation * Math.PI;
+        this.direction = baseDirection + directionVariation;
+
+        // Normalize direction to keep it within [0, 2π]
+        this.direction = (this.direction + 2 * Math.PI) % (2 * Math.PI);
 
         // Current curve value (positive or negative affects curve direction)
         // Vary the initial curve value based on index to create different flight patterns
