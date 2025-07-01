@@ -41,7 +41,14 @@
 </main>
 <script type="module">
     import {Starfield} from "./src/Starfield.js"
-    new Starfield(document.getElementById("starfield"))
+    new Starfield(document.getElementById("starfield"), {
+        showSpaceShip: true,
+        spaceShipProps: {
+            color: "#3399ff",
+            size: 15,
+            speed: 4
+        }
+    })
 </script>
 </body>
 </html>

@@ -3,6 +3,8 @@
  * Repository: https://github.com/shaack/starfield-js
  * License: MIT, see file 'LICENSE'
  */
+import { SpaceShip } from "./SpaceShip.js"
+
 export class Starfield {
     constructor(canvas, props) {
         this.canvas = canvas
@@ -12,6 +14,8 @@ export class Starfield {
             fpsMax: 50,
             color: "multi", // set "multi" or a fixed color, like "#ff9"
             magnification: 4,
+            showSpaceShip: true, // enable/disable spaceship
+            spaceShipProps: {}, // custom properties for the spaceship
             ...props
         }
         this.ctx = canvas.getContext("2d")
@@ -43,6 +47,12 @@ export class Starfield {
                 star.y = Math.random() * this.canvas.height - this.centerY
             }
         }
+
+        // Draw spaceship if it exists
+        if (this.spaceShip) {
+            this.spaceShip.draw()
+        }
+
         setTimeout(() => {
             requestAnimationFrame(this.draw.bind(this))
         }, 1000 / this.props.fpsMax)
@@ -67,6 +77,11 @@ export class Starfield {
             }
 
             this.stars.push(star)
+        }
+
+        // Initialize spaceship if enabled
+        if (this.props.showSpaceShip) {
+            this.spaceShip = new SpaceShip(this.canvas, this.props.spaceShipProps)
         }
     }
 }
