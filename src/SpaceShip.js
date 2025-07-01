@@ -37,12 +37,12 @@ export class SpaceShip {
     }
 
     init() {
-        // Initialize the spaceship at a random position
+        // Initialize the spaceship at the bottom of the screen with random x position
         this.x = Math.random() * this.canvas.width
-        this.y = Math.random() * this.canvas.height
+        this.y = this.canvas.height - this.props.edgeDistance
 
-        // Random initial direction (angle in radians)
-        this.direction = Math.random() * Math.PI * 2
+        // Set initial direction to upward (3π/2 or 270 degrees in radians)
+        this.direction = 3 * Math.PI / 2
 
         // Current curve value (positive or negative affects curve direction)
         this.curveValue = 0
