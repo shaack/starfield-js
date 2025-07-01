@@ -19,6 +19,12 @@ export class SpaceShip {
             tailOpacity: 1.0, // Base opacity of the tail (0.0 to 1.0)
             edgeDistance: 100, // Distance from edge to start turning
             edgeCurveIntensity: 0.05, // How strongly to curve when approaching an edge
+
+            // Swarm properties
+            index: 0, // Index of this ship in the swarm (0-based)
+            swarmCount: 1, // Total number of ships in the swarm
+            swarmSpread: 0.3, // How far apart the ships are horizontally (0-1)
+            swarmOffset: 0.1, // Vertical offset between ships (0-1)
             ...props
         }
 
@@ -37,15 +43,37 @@ export class SpaceShip {
     }
 
     init() {
-        // Initialize the spaceship at the bottom of the screen with random x position
-        this.x = Math.random() * this.canvas.width
-        this.y = this.canvas.height - this.props.edgeDistance
+        // Calculate position based on index in the swarm
+        const canvasWidth = this.canvas.width
+        const canvasHeight = this.canvas.height
+
+        // Calculate horizontal spread based on index
+        // Center ship (index 1 in a 3-ship swarm) will be in the middle
+        // Other ships will be spread out based on swarmSpread
+        const normalizedIndex = this.props.index - (this.props.swarmCount - 1) / 2
+        const horizontalPosition = 0.5 + normalizedIndex * this.props.swarmSpread
+
+        // Apply some randomness to make it look more natural
+        const randomOffset = (Math.random() - 0.5) * 0.1
+
+        // Calculate x position (constrained to be within the canvas)
+        this.x = Math.max(this.props.edgeDistance,
+                 Math.min(canvasWidth - this.props.edgeDistance,
+                         canvasWidth * (horizontalPosition + randomOffset)))
+
+        // Calculate y position with vertical offset based on index
+        // All ships start from the bottom, but with slight vertical offsets
+        const verticalOffset = this.props.index * this.props.swarmOffset * canvasHeight
+        this.y = canvasHeight - this.props.edgeDistance - verticalOffset
 
         // Set initial direction to upward (3π/2 or 270 degrees in radians)
-        this.direction = 3 * Math.PI / 2
+        // Add a small random variation to each ship's direction
+        const directionVariation = (Math.random() - 0.5) * 0.2
+        this.direction = 3 * Math.PI / 2 + directionVariation
 
         // Current curve value (positive or negative affects curve direction)
-        this.curveValue = 0
+        // Vary the initial curve value based on index to create different flight patterns
+        this.curveValue = (this.props.index / this.props.swarmCount - 0.5) * this.props.curveIntensity
     }
 
     update() {

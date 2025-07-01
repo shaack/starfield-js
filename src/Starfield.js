@@ -15,6 +15,7 @@ export class Starfield {
             color: "multi", // set "multi" or a fixed color, like "#ff9"
             magnification: 4,
             showSpaceShip: true, // enable/disable spaceship
+            spaceShipCount: 3, // number of spaceships in the swarm
             spaceShipProps: {}, // custom properties for the spaceship
             ...props
         }
@@ -48,9 +49,11 @@ export class Starfield {
             }
         }
 
-        // Draw spaceship if it exists
-        if (this.spaceShip) {
-            this.spaceShip.draw()
+        // Draw spaceships if they exist
+        if (this.spaceShips && this.spaceShips.length > 0) {
+            for (const spaceShip of this.spaceShips) {
+                spaceShip.draw()
+            }
         }
 
         setTimeout(() => {
@@ -79,9 +82,18 @@ export class Starfield {
             this.stars.push(star)
         }
 
-        // Initialize spaceship if enabled
+        // Initialize spaceships if enabled
         if (this.props.showSpaceShip) {
-            this.spaceShip = new SpaceShip(this.canvas, this.props.spaceShipProps)
+            this.spaceShips = []
+            for (let i = 0; i < this.props.spaceShipCount; i++) {
+                // Create a copy of the props for each ship and add the index
+                const shipProps = {
+                    ...this.props.spaceShipProps,
+                    index: i,
+                    swarmCount: this.props.spaceShipCount
+                }
+                this.spaceShips.push(new SpaceShip(this.canvas, shipProps))
+            }
         }
     }
 }
