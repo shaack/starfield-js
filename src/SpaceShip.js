@@ -14,6 +14,8 @@ export class SpaceShip {
             curveChangeRate: 0.005, // How often the curve direction changes
             tailLength: 50, // Number of positions to keep for the tail
             tailMaxDistance: 500, // Maximum distance in pixels for the tail
+            edgeDistance: 100, // Distance from edge to start turning
+            edgeCurveIntensity: 0.05, // How strongly to curve when approaching an edge
             ...props
         }
         this.ctx = canvas.getContext("2d")
@@ -34,13 +36,7 @@ export class SpaceShip {
     }
 
     update() {
-        // Update curve value with some randomness
-        if (Math.random() < this.props.curveChangeRate) {
-            this.curveValue = (Math.random() - 0.5) * this.props.curveIntensity
-        }
-
-        // Update direction based on curve
-        this.direction += this.curveValue
+        // We'll handle curve value update in the edge detection code
 
         // Update position based on direction and speed
         this.x += Math.cos(this.direction) * this.props.speed
@@ -58,27 +54,93 @@ export class SpaceShip {
             this.positions.pop()
         }
 
-        // Prevent ship from flying out of the screen by bouncing off edges
-        if (this.x < 0) {
-            this.x = 0
-            // Reflect the direction horizontally (bounce off left edge)
-            this.direction = Math.PI - this.direction
+        // Prevent ship from flying out of the screen by curving away from edges
+        // Check distance from each edge and apply curve if needed
+        let edgeCurveApplied = false;
+
+        // Left edge
+        if (this.x < this.props.edgeDistance) {
+            // Calculate how close we are to the edge (0 = at edge, 1 = at edgeDistance)
+            const distanceFactor = this.x / this.props.edgeDistance;
+            // Apply stronger curve as we get closer to the edge
+            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            // Determine ideal direction to move away from edge (right = 0)
+            const idealDirection = 0;
+            // Calculate difference between current and ideal direction
+            let dirDiff = idealDirection - this.direction;
+
+            // Normalize the difference to be between -π and π
+            while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
+            while (dirDiff < -Math.PI) dirDiff += 2 * Math.PI;
+
+            // Apply curve based on direction difference
+            this.direction += curveStrength * Math.sign(dirDiff);
+            edgeCurveApplied = true;
         }
-        if (this.x > this.canvas.width) {
-            this.x = this.canvas.width
-            // Reflect the direction horizontally (bounce off right edge)
-            this.direction = Math.PI - this.direction
+
+        // Right edge
+        if (this.x > this.canvas.width - this.props.edgeDistance) {
+            const distanceFactor = (this.canvas.width - this.x) / this.props.edgeDistance;
+            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            // Ideal direction to move away from right edge (left = π)
+            const idealDirection = Math.PI;
+            let dirDiff = idealDirection - this.direction;
+
+            while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
+            while (dirDiff < -Math.PI) dirDiff += 2 * Math.PI;
+
+            this.direction += curveStrength * Math.sign(dirDiff);
+            edgeCurveApplied = true;
         }
-        if (this.y < 0) {
-            this.y = 0
-            // Reflect the direction vertically (bounce off top edge)
-            this.direction = -this.direction
+
+        // Top edge
+        if (this.y < this.props.edgeDistance) {
+            const distanceFactor = this.y / this.props.edgeDistance;
+            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            // Ideal direction to move away from top edge (down = π/2)
+            const idealDirection = Math.PI / 2;
+            let dirDiff = idealDirection - this.direction;
+
+            while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
+            while (dirDiff < -Math.PI) dirDiff += 2 * Math.PI;
+
+            this.direction += curveStrength * Math.sign(dirDiff);
+            edgeCurveApplied = true;
         }
-        if (this.y > this.canvas.height) {
-            this.y = this.canvas.height
-            // Reflect the direction vertically (bounce off bottom edge)
-            this.direction = -this.direction
+
+        // Bottom edge
+        if (this.y > this.canvas.height - this.props.edgeDistance) {
+            const distanceFactor = (this.canvas.height - this.y) / this.props.edgeDistance;
+            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            // Ideal direction to move away from bottom edge (up = 3π/2)
+            const idealDirection = 3 * Math.PI / 2;
+            let dirDiff = idealDirection - this.direction;
+
+            while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
+            while (dirDiff < -Math.PI) dirDiff += 2 * Math.PI;
+
+            this.direction += curveStrength * Math.sign(dirDiff);
+            edgeCurveApplied = true;
         }
+
+        // Only apply random curve if not near an edge
+        if (!edgeCurveApplied) {
+            if (Math.random() < this.props.curveChangeRate) {
+                this.curveValue = (Math.random() - 0.5) * this.props.curveIntensity;
+            }
+            // Apply the random curve to the direction
+            this.direction += this.curveValue;
+        }
+
+        // Hard limits to prevent going off-screen in case curve fails
+        if (this.x < 0) this.x = 0;
+        if (this.x > this.canvas.width) this.x = this.canvas.width;
+        if (this.y < 0) this.y = 0;
+        if (this.y > this.canvas.height) this.y = this.canvas.height;
 
         // Normalize direction to keep it within [0, 2π]
         this.direction = (this.direction + 2 * Math.PI) % (2 * Math.PI)
