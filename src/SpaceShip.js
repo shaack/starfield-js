@@ -19,6 +19,9 @@ export class SpaceShip {
             tailOpacity: 1.0, // Base opacity of the tail (0.0 to 1.0)
             edgeDistance: 100, // Distance from edge to start turning
             edgeCurveIntensity: 0.05, // How strongly to curve when approaching an edge
+            stuckThreshold: 50, // Number of frames to consider a ship stuck
+            stuckEscapeMultiplier: 3.0, // Multiplier for curve intensity when stuck
+            cornerDetectionThreshold: 1.5, // Threshold to detect when ship is in a corner
 
             // Swarm properties
             index: 0, // Index of this ship in the swarm (0-based)
@@ -39,6 +42,18 @@ export class SpaceShip {
         }
         this.ctx = canvas.getContext("2d")
         this.positions = [] // Array to store previous positions for the tail
+
+        // Initialize edge tracking variables
+        this.edgeProximityFrames = {
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0
+        }
+        this.lastPosition = { x: 0, y: 0 }
+        this.isStuck = false
+        this.stuckFrames = 0
+
         this.init()
     }
 
@@ -77,7 +92,8 @@ export class SpaceShip {
     }
 
     update() {
-        // We'll handle curve value update in the edge detection code
+        // Save the last position to detect if we're stuck
+        this.lastPosition = { x: this.x, y: this.y };
 
         // Update position based on direction and speed
         this.x += Math.cos(this.direction) * this.props.speed
@@ -95,19 +111,63 @@ export class SpaceShip {
             this.positions.pop()
         }
 
+        // Check if the ship is stuck (minimal movement)
+        const movement = Math.sqrt(
+            Math.pow(this.x - this.lastPosition.x, 2) +
+            Math.pow(this.y - this.lastPosition.y, 2)
+        );
+
+        if (movement < this.props.speed * 0.2) {
+            this.stuckFrames++;
+            if (this.stuckFrames > this.props.stuckThreshold) {
+                this.isStuck = true;
+            }
+        } else {
+            // Reset stuck counter if we're moving normally
+            this.stuckFrames = Math.max(0, this.stuckFrames - 2); // Decrease faster than it increases
+            if (this.stuckFrames === 0) {
+                this.isStuck = false;
+            }
+        }
+
         // Prevent ship from flying out of the screen by curving away from edges
         // Check distance from each edge and apply curve if needed
         let edgeCurveApplied = false;
+        let edgeCount = 0; // Count how many edges we're near (for corner detection)
+
+        // Track which edges we're near
+        const nearEdges = {
+            left: false,
+            right: false,
+            top: false,
+            bottom: false
+        };
 
         // Left edge
         if (this.x < this.props.edgeDistance) {
+            nearEdges.left = true;
+            edgeCount++;
+            this.edgeProximityFrames.left++;
+
             // Calculate how close we are to the edge (0 = at edge, 1 = at edgeDistance)
             const distanceFactor = this.x / this.props.edgeDistance;
+
             // Apply stronger curve as we get closer to the edge
-            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+            // Use stuckEscapeMultiplier if we're stuck
+            let curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+            if (this.isStuck || this.edgeProximityFrames.left > this.props.stuckThreshold) {
+                curveStrength *= this.props.stuckEscapeMultiplier;
+            }
 
             // Determine ideal direction to move away from edge (right = 0)
-            const idealDirection = 0;
+            // If we're in a corner, adjust the ideal direction to move diagonally away
+            let idealDirection = 0;
+            if (nearEdges.top) {
+                idealDirection = Math.PI / 4; // Down-right (45°)
+            } else if (nearEdges.bottom) {
+                idealDirection = 7 * Math.PI / 4; // Up-right (315°)
+            }
+
             // Calculate difference between current and ideal direction
             let dirDiff = idealDirection - this.direction;
 
@@ -118,15 +178,32 @@ export class SpaceShip {
             // Apply curve based on direction difference
             this.direction += curveStrength * Math.sign(dirDiff);
             edgeCurveApplied = true;
+        } else {
+            // Reset counter if we're not near this edge
+            this.edgeProximityFrames.left = 0;
         }
 
         // Right edge
         if (this.x > this.canvas.width - this.props.edgeDistance) {
+            nearEdges.right = true;
+            edgeCount++;
+            this.edgeProximityFrames.right++;
+
             const distanceFactor = (this.canvas.width - this.x) / this.props.edgeDistance;
-            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            let curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+            if (this.isStuck || this.edgeProximityFrames.right > this.props.stuckThreshold) {
+                curveStrength *= this.props.stuckEscapeMultiplier;
+            }
 
             // Ideal direction to move away from right edge (left = π)
-            const idealDirection = Math.PI;
+            let idealDirection = Math.PI;
+            if (nearEdges.top) {
+                idealDirection = 3 * Math.PI / 4; // Down-left (135°)
+            } else if (nearEdges.bottom) {
+                idealDirection = 5 * Math.PI / 4; // Up-left (225°)
+            }
+
             let dirDiff = idealDirection - this.direction;
 
             while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
@@ -134,15 +211,31 @@ export class SpaceShip {
 
             this.direction += curveStrength * Math.sign(dirDiff);
             edgeCurveApplied = true;
+        } else {
+            this.edgeProximityFrames.right = 0;
         }
 
         // Top edge
         if (this.y < this.props.edgeDistance) {
+            nearEdges.top = true;
+            edgeCount++;
+            this.edgeProximityFrames.top++;
+
             const distanceFactor = this.y / this.props.edgeDistance;
-            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            let curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+            if (this.isStuck || this.edgeProximityFrames.top > this.props.stuckThreshold) {
+                curveStrength *= this.props.stuckEscapeMultiplier;
+            }
 
             // Ideal direction to move away from top edge (down = π/2)
-            const idealDirection = Math.PI / 2;
+            let idealDirection = Math.PI / 2;
+            if (nearEdges.left) {
+                idealDirection = Math.PI / 4; // Down-right (45°)
+            } else if (nearEdges.right) {
+                idealDirection = 3 * Math.PI / 4; // Down-left (135°)
+            }
+
             let dirDiff = idealDirection - this.direction;
 
             while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
@@ -150,15 +243,31 @@ export class SpaceShip {
 
             this.direction += curveStrength * Math.sign(dirDiff);
             edgeCurveApplied = true;
+        } else {
+            this.edgeProximityFrames.top = 0;
         }
 
         // Bottom edge
         if (this.y > this.canvas.height - this.props.edgeDistance) {
+            nearEdges.bottom = true;
+            edgeCount++;
+            this.edgeProximityFrames.bottom++;
+
             const distanceFactor = (this.canvas.height - this.y) / this.props.edgeDistance;
-            const curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+
+            let curveStrength = this.props.edgeCurveIntensity * (1 - distanceFactor);
+            if (this.isStuck || this.edgeProximityFrames.bottom > this.props.stuckThreshold) {
+                curveStrength *= this.props.stuckEscapeMultiplier;
+            }
 
             // Ideal direction to move away from bottom edge (up = 3π/2)
-            const idealDirection = 3 * Math.PI / 2;
+            let idealDirection = 3 * Math.PI / 2;
+            if (nearEdges.left) {
+                idealDirection = 7 * Math.PI / 4; // Up-right (315°)
+            } else if (nearEdges.right) {
+                idealDirection = 5 * Math.PI / 4; // Up-left (225°)
+            }
+
             let dirDiff = idealDirection - this.direction;
 
             while (dirDiff > Math.PI) dirDiff -= 2 * Math.PI;
@@ -166,6 +275,22 @@ export class SpaceShip {
 
             this.direction += curveStrength * Math.sign(dirDiff);
             edgeCurveApplied = true;
+        } else {
+            this.edgeProximityFrames.bottom = 0;
+        }
+
+        // If we're in a corner (near multiple edges), apply an extra strong correction
+        if (edgeCount >= 2) {
+            // Add a random jitter to help escape from corners
+            this.direction += (Math.random() - 0.5) * 0.2;
+        }
+
+        // If we're stuck for too long, apply a more drastic measure
+        if (this.isStuck && this.stuckFrames > this.props.stuckThreshold * 2) {
+            // Add a significant random change to the direction
+            this.direction += (Math.random() - 0.5) * Math.PI;
+            // Reset stuck counter to give this correction a chance to work
+            this.stuckFrames = this.props.stuckThreshold;
         }
 
         // Only apply random curve if not near an edge
@@ -175,6 +300,12 @@ export class SpaceShip {
             }
             // Apply the random curve to the direction
             this.direction += this.curveValue;
+
+            // Reset all edge proximity counters when we're away from edges
+            this.edgeProximityFrames.left = 0;
+            this.edgeProximityFrames.right = 0;
+            this.edgeProximityFrames.top = 0;
+            this.edgeProximityFrames.bottom = 0;
         }
 
         // Hard limits to prevent going off-screen in case curve fails

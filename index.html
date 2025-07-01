@@ -54,7 +54,10 @@
             tailMaxDistance: 2000,
             tailOpacity: 0.8, // Set tail opacity to 0.8
             edgeDistance: 150, // Distance from edge to start turning
-            edgeCurveIntensity: 0.08, // How strongly to curve when approaching an edge
+            edgeCurveIntensity: 0.1, // How strongly to curve when approaching an edge
+            stuckThreshold: 40, // Number of frames to consider a ship stuck
+            stuckEscapeMultiplier: 3.5, // Multiplier for curve intensity when stuck
+            cornerDetectionThreshold: 1.5, // Threshold to detect when ship is in a corner
 
             // Swarm behavior configuration
             swarmSpread: 0.3, // How far apart the ships are horizontally (0-1)
