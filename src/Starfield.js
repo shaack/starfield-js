@@ -11,7 +11,7 @@ export class Starfield {
             speed: 5,
             fpsMax: 50,
             color: "multi", // set "multi" or a fixed color, like "#ff9"
-            magnification: 3,
+            magnification: 4,
             ...props
         }
         this.ctx = canvas.getContext("2d")
@@ -27,7 +27,6 @@ export class Starfield {
     }
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.ctx.fillStyle = "white"
         for (let i = 0; i < this.stars.length; i++) {
             const star = this.stars[i]
             const x = this.centerX + (star.x / star.z) * this.canvas.width
