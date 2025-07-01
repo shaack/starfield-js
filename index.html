@@ -52,16 +52,16 @@
     import {Starfield} from "./src/Starfield.js"
     new Starfield(document.getElementById("starfield"), {
         showSpaceShip: true,
-        spaceShipCount: 5, // Configure the number of ships in the swarm
+        spaceShipCount: 3, // Configure the number of ships in the swarm
         spaceShipProps: {
             color: "#2d509e", // Blue ship
             tailStartColor: "#ffff00", // Yellow start of tail
-            tailEndColor: "#ff0000", // Red end of tail
+            tailEndColor: "#fa0000", // Red end of tail
             size: 10,
-            speed: 4,
+            speed: 6,
             tailLength: 500,
             tailMaxDistance: 500,
-            tailOpacity: 0.8, // Set tail opacity to 0.8
+            tailOpacity: 0.5, // Set tail opacity to 0.8
             edgeDistance: 150, // Distance from edge to start turning
             edgeCurveIntensity: 0.1, // How strongly to curve when approaching an edge
             stuckThreshold: 40, // Number of frames to consider a ship stuck
@@ -74,8 +74,8 @@
 
             // Following behavior configuration
             followEnabled: true, // Whether ships should follow each other
-            followStrength: 0.05, // How strongly a ship follows another (0-1)
-            followDistance: 200 // Maximum distance to follow another ship
+            followStrength: 0.07, // How strongly a ship follows another (0-1)
+            followDistance: 300 // Maximum distance to follow another ship
         }
     })
 </script>
