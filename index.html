@@ -32,18 +32,27 @@
             cursor: pointer;
             text-decoration: none;
         }
+        .fade-out-15 {
+            animation:  fade 15s linear forwards;
+        }
+        @keyframes fade {
+            100% {
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
 <canvas id="starfield"></canvas>
 <main>
-    <div class="text"><a href="https://github.com/shaack/starfield-js">starfield-js</a></div>
+    <div class="text fade-out-15"><a href="https://github.com/shaack/starfield-js">starfield-js</a>
+    </div>
 </main>
 <script type="module">
     import {Starfield} from "./src/Starfield.js"
     new Starfield(document.getElementById("starfield"), {
         showSpaceShip: true,
-        spaceShipCount: 20, // Configure the number of ships in the swarm
+        spaceShipCount: 5, // Configure the number of ships in the swarm
         spaceShipProps: {
             color: "#2d509e", // Blue ship
             tailStartColor: "#ffff00", // Yellow start of tail
@@ -66,7 +75,7 @@
             // Following behavior configuration
             followEnabled: true, // Whether ships should follow each other
             followStrength: 0.05, // How strongly a ship follows another (0-1)
-            followDistance: 500 // Maximum distance to follow another ship
+            followDistance: 200 // Maximum distance to follow another ship
         }
     })
 </script>
