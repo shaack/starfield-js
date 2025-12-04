@@ -3,8 +3,6 @@
  * Repository: https://github.com/shaack/starfield-js
  * License: MIT, see file 'LICENSE'
  */
-import { SpaceShip } from "./SpaceShip.js"
-
 export class Starfield {
     constructor(canvas, props) {
         this.canvas = canvas
@@ -49,13 +47,6 @@ export class Starfield {
             }
         }
 
-        // Draw spaceships if they exist
-        if (this.spaceShips && this.spaceShips.length > 0) {
-            for (const spaceShip of this.spaceShips) {
-                spaceShip.draw()
-            }
-        }
-
         setTimeout(() => {
             requestAnimationFrame(this.draw.bind(this))
         }, 1000 / this.props.fpsMax)
@@ -82,23 +73,5 @@ export class Starfield {
             this.stars.push(star)
         }
 
-        // Initialize spaceships if enabled
-        if (this.props.showSpaceShip) {
-            this.spaceShips = []
-            for (let i = 0; i < this.props.spaceShipCount; i++) {
-                // Create a copy of the props for each ship and add the index
-                const shipProps = {
-                    ...this.props.spaceShipProps,
-                    index: i,
-                    swarmCount: this.props.spaceShipCount
-                }
-                this.spaceShips.push(new SpaceShip(this.canvas, shipProps))
-            }
-
-            // After all ships are created, pass the swarm to each ship
-            for (const ship of this.spaceShips) {
-                ship.setSwarm(this.spaceShips)
-            }
-        }
     }
 }
