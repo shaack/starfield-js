@@ -26,7 +26,7 @@ export class Starfield {
         })
     }
     draw(currentTime) {
-        const deltaTime = this.lastTime ? (currentTime - this.lastTime) / 1000 : 0
+        const deltaTime = Math.min(this.lastTime ? (currentTime - this.lastTime) / 1000 : 0, 0.1)
         this.lastTime = currentTime
 
         const ctx = this.ctx
