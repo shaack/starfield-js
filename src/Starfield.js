@@ -37,28 +37,17 @@ export class Starfield {
         const height = this.canvas.height
         const magnification = this.props.magnification
         const speed = this.props.speed * 60 * deltaTime
-        const isMultiColor = this.props.color === "multi"
-        const TWO_PI = Math.PI * 2
 
         ctx.clearRect(0, 0, width, height)
-
-        if (!isMultiColor) {
-            ctx.fillStyle = this.props.color
-        }
 
         for (let i = 0, len = stars.length; i < len; i++) {
             const star = stars[i]
             const x = centerX + (star.x / star.z) * width
             const y = centerY + (star.y / star.z) * height
             const size = magnification * (1 - star.z / width)
+            const drawSize = size * 2
 
-            if (isMultiColor) {
-                ctx.fillStyle = star.color
-            }
-
-            ctx.beginPath()
-            ctx.arc(x, y, size, 0, TWO_PI)
-            ctx.fill()
+            ctx.drawImage(star.sprite, x - size, y - size, drawSize, drawSize)
 
             star.z -= speed
             if (star.z <= 0) {
@@ -70,27 +59,41 @@ export class Starfield {
 
         requestAnimationFrame(this.draw)
     }
+    createStarSprite(color, size) {
+        const sprite = document.createElement('canvas')
+        sprite.width = sprite.height = size * 2
+        const ctx = sprite.getContext('2d')
+        ctx.beginPath()
+        ctx.arc(size, size, size, 0, Math.PI * 2)
+        ctx.fillStyle = color
+        ctx.fill()
+        return sprite
+    }
     init() {
         this.stars = []
         this.canvas.width = window.innerWidth
         this.canvas.height = window.innerHeight
         this.centerX = this.canvas.width / 2
         this.centerY = this.canvas.height / 2
+        const spriteSize = this.props.magnification * 2
+        const isMultiColor = this.props.color === "multi"
+
+        // For fixed color, create one shared sprite
+        if (!isMultiColor) {
+            this.sharedSprite = this.createStarSprite(this.props.color, spriteSize)
+        }
+
         for (let i = 0; i < this.props.starCount; i++) {
+            const color = isMultiColor
+                ? `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`
+                : this.props.color
             const star = {
                 x: Math.random() * this.canvas.width - this.centerX,
                 y: Math.random() * this.canvas.height - this.centerY,
                 z: Math.random() * this.canvas.width,
-                color: "rgb(255,255,255)"
+                sprite: isMultiColor ? this.createStarSprite(color, spriteSize) : this.sharedSprite
             }
-            if(this.props.color === "multi") {
-                star.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`
-            } else {
-                star.color = this.props.color
-            }
-
             this.stars.push(star)
         }
-
     }
 }
