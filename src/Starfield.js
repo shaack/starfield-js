@@ -44,9 +44,11 @@ export class Starfield {
             const star = stars[i]
             const x = centerX + (star.x / star.z) * width
             const y = centerY + (star.y / star.z) * height
-            const size = magnification * (1 - star.z / width)
+            const depth = 1 - star.z / width
+            const size = magnification * depth
             const drawSize = size * 2
 
+            ctx.globalAlpha = depth
             ctx.drawImage(star.sprite, x - size, y - size, drawSize, drawSize)
 
             star.z -= speed
@@ -56,6 +58,7 @@ export class Starfield {
                 star.y = Math.random() * height - centerY
             }
         }
+        ctx.globalAlpha = 1
 
         requestAnimationFrame(this.draw)
     }
