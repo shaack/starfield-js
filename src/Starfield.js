@@ -7,14 +7,14 @@ export class Starfield {
     constructor(canvas, props) {
         this.canvas = canvas
         this.props = {
-            starCount: 2000,
+            starCount: 1000,
             speed: 5,
             color: "multi", // set "multi" or a fixed color, like "#ff9"
             magnification: 4,
             ...props
         }
         this.ctx = canvas.getContext("2d")
-        this.lastTime = performance.now()
+        this.lastTime = 0
         this.draw = this.draw.bind(this)
         this.init()
         requestAnimationFrame(this.draw)
@@ -26,7 +26,7 @@ export class Starfield {
         })
     }
     draw(currentTime) {
-        const deltaTime = (currentTime - this.lastTime) / 1000
+        const deltaTime = this.lastTime ? (currentTime - this.lastTime) / 1000 : 0
         this.lastTime = currentTime
 
         const ctx = this.ctx
