@@ -7,49 +7,68 @@ export class Starfield {
     constructor(canvas, props) {
         this.canvas = canvas
         this.props = {
-            starCount: 400,
+            starCount: 2000,
             speed: 5,
-            fpsMax: 50,
             color: "multi", // set "multi" or a fixed color, like "#ff9"
             magnification: 4,
-            showSpaceShip: true, // enable/disable spaceship
-            spaceShipCount: 3, // number of spaceships in the swarm
-            spaceShipProps: {}, // custom properties for the spaceship
             ...props
         }
         this.ctx = canvas.getContext("2d")
+        this.lastTime = performance.now()
+        this.draw = this.draw.bind(this)
         this.init()
-        this.draw()
+        requestAnimationFrame(this.draw)
         window.addEventListener("resize", () => {
             clearTimeout(this.initDebounce)
             this.initDebounce = setTimeout(() => {
                 this.init()
             }, 100)
         })
-
     }
-    draw() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        for (let i = 0; i < this.stars.length; i++) {
-            const star = this.stars[i]
-            const x = this.centerX + (star.x / star.z) * this.canvas.width
-            const y = this.centerY + (star.y / star.z) * this.canvas.height
-            const size = this.props.magnification * (1 - star.z / this.canvas.width)
-            this.ctx.beginPath()
-            this.ctx.arc(x, y, size, 0, Math.PI * 2, false)
-            this.ctx.fill()
-            this.ctx.fillStyle = star.color
-            star.z -= this.props.speed * 60 / this.props.fpsMax
+    draw(currentTime) {
+        const deltaTime = (currentTime - this.lastTime) / 1000
+        this.lastTime = currentTime
+
+        const ctx = this.ctx
+        const stars = this.stars
+        const centerX = this.centerX
+        const centerY = this.centerY
+        const width = this.canvas.width
+        const height = this.canvas.height
+        const magnification = this.props.magnification
+        const speed = this.props.speed * 60 * deltaTime
+        const isMultiColor = this.props.color === "multi"
+        const TWO_PI = Math.PI * 2
+
+        ctx.clearRect(0, 0, width, height)
+
+        if (!isMultiColor) {
+            ctx.fillStyle = this.props.color
+        }
+
+        for (let i = 0, len = stars.length; i < len; i++) {
+            const star = stars[i]
+            const x = centerX + (star.x / star.z) * width
+            const y = centerY + (star.y / star.z) * height
+            const size = magnification * (1 - star.z / width)
+
+            if (isMultiColor) {
+                ctx.fillStyle = star.color
+            }
+
+            ctx.beginPath()
+            ctx.arc(x, y, size, 0, TWO_PI)
+            ctx.fill()
+
+            star.z -= speed
             if (star.z <= 0) {
-                star.z = this.canvas.width
-                star.x = Math.random() * this.canvas.width - this.centerX
-                star.y = Math.random() * this.canvas.height - this.centerY
+                star.z = width
+                star.x = Math.random() * width - centerX
+                star.y = Math.random() * height - centerY
             }
         }
 
-        setTimeout(() => {
-            requestAnimationFrame(this.draw.bind(this))
-        }, 1000 / this.props.fpsMax)
+        requestAnimationFrame(this.draw)
     }
     init() {
         this.stars = []
